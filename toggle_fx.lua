@@ -4,6 +4,7 @@
 -- TODO:
 --  Handle case when FX chain is open
 --  Handle case when FX chain and track effects are both open (save FX chain first)
+--  Make it so z-order of FX windows reloads right
 
 local using_reaper = reaper ~= nil
 local current_project = reaper.EnumProjects(-1, "")
