@@ -117,16 +117,42 @@ function close_fx(fxs)
     end
 end
 
-function main()
-    path = reaper.GetResourcePath() .. "/Scripts/Numu Scripts/plug_state.txt"
+function check_fx_chain_open()
+    return false
+end
 
-    if check_fx_open() then
+function get_fx_chain_open()
+    return {}
+end
+
+function save_track_fx_chain(fx_chain, path)
+end
+
+function close_fx_chain(fxs)
+end
+
+function load_track_fx_chain(fx_chain_path)
+end
+
+function main()
+    local fx_path = reaper.GetResourcePath() .. "/Scripts/Numu Scripts/fx_state.txt"
+    local fx_chain_path = reaper.GetResourcePath() .. "/Scripts/Numu Scripts/fx_chain_state.txt"
+
+    if check_fx_open() or check_fx_chain_open() then
+        local fx_chain = get_fx_chain_open()
         local fxs = get_fx_open()
-        save_track_fx(fxs, path)
+
+        save_track_fx_chain(fx_chain, fx_chain_path)
+        save_track_fx(fxs, fx_path)
+
+        close_fx_chain(fx_chain)
         close_fx(fxs)
     else
-        if file_exists(path) then load_track_fx(path) end
-        clear(path)
+        if file_exists(fx_chain_path) then load_track_fx_chain(fx_chain_path) end
+        if file_exists(fx_path)       then load_track_fx(fx_path) end
+
+        clear(fx_chain_path)
+        clear(fx_path)
     end
 end
 
