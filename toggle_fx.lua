@@ -2,8 +2,6 @@
 -- global. This way toggle visibility will work irrespective of focus.
 
 -- TODO:
---  Simplify table storing GUID -> FXs
---  Verify GUID invalidations (don't reload effects from tracks that don't exist)
 --  Handle case when FX chain is open
 --  Handle case when FX chain and track effects are both open (save FX chain first)
 
@@ -48,6 +46,14 @@ function table_length(table)
     return c
 end
 
+function print_fxs(fxs)
+    for guid, fx_set in pairs(fxs) do
+        for fx_idx, _ in pairs(fx_set) do
+            display(guid .. " " .. fx_idx)
+        end
+    end
+end
+
 -- This needs to be refactored
 -- Also redesigned as `FXs` is not very efficient
 function get_fx_open()
@@ -62,8 +68,7 @@ function get_fx_open()
                     fxs[reaper.GetTrackGUID(track)] = {}
                     first = false
                 end
-                fxs[reaper.GetTrackGUID(track)][iFx] = iTrack
-                -- display("    " .. iTrack .. " -> " .. iFx .. "\n")
+                fxs[reaper.GetTrackGUID(track)][iFx] = 0
             end
         end
     end
@@ -73,8 +78,8 @@ end
 function save_track_fx(fxs, path)
     local file = io.open(path, "w")
     for guid, data in pairs(fxs) do
-        for iFx, iTrack in pairs(data) do
-            file:write(guid .. "," .. iTrack .. "," .. iFx .. "\n")
+        for iFx, _ in pairs(data) do
+            file:write(guid .. "," .. iFx .. "\n")
         end
     end
     file:close()
@@ -84,9 +89,9 @@ function load_track_fx(path)
     local file = io.open(path, "r")
     guids = get_track_guids()
     for line in file:lines() do
-        guid, iTrack, iFx = line:match("([^,]*),([^,]*),([^,]*)")
+        guid, iFx = line:match("([^,]*),([^,]*)")
         if guids[guid] ~= nil then
-            local track = reaper.GetTrack(current_project, iTrack)
+            local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
             reaper.TrackFX_SetOpen(track, iFx, true)
         end
     end
@@ -103,9 +108,9 @@ function get_track_guids()
 end
 
 function close_fx(fxs)
-    for _, data in pairs(fxs) do
-        for iFx, iTrack in pairs(data) do
-            local track = reaper.GetTrack(current_project, iTrack)
+    for guid, data in pairs(fxs) do
+        for iFx, _ in pairs(data) do
+            local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
             reaper.TrackFX_SetOpen(track, iFx, false)
         end
     end
