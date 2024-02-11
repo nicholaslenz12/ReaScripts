@@ -2,8 +2,6 @@
 -- global. This way toggle visibility will work irrespective of focus.
 
 -- TODO:
---  Handle case when FX chain is open
---  Handle case when FX chain and track effects are both open (save FX chain first)
 --  Make it so z-order of FX windows reloads right
 
 local using_reaper = reaper ~= nil
@@ -96,10 +94,10 @@ function load_track_fx(path)
     local file = io.open(path, "r")
     guids = get_track_guids()
     for line in file:lines() do
-        guid, iFx = line:match("([^,]*),([^,]*)")
+        guid, fx_idx = line:match("([^,]*),([^,]*)")
         if guids[guid] ~= nil then
             local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
-            reaper.TrackFX_SetOpen(track, iFx, true)
+            reaper.TrackFX_SetOpen(track, fx_idx, true)
         end
     end
     file:close()
@@ -124,7 +122,7 @@ function close_fx(fxs)
 end
 
 function check_fx_chain_open()
-    return false
+    return table_length(get_fx_chain_open()) > 0
 end
 
 -- Assume single effect chain for now
@@ -132,22 +130,42 @@ function get_fx_chain_open()
     local chains = {}
     for iTrack = 0, reaper.GetNumTracks(current_project) - 1 do
         local track = reaper.GetTrack(current_project, iTrack)
-        local visible = reaper.TrackFX_GetChainVisible(track) >= 0 or
-                        reaper.TrackFX_GetChainVisible(track) == -2
+        fx_idx = reaper.TrackFX_GetChainVisible(track)
+        local visible = fx_idx >= 0 or
+                        fx_idx == -2
         if visible then
-            chains[reaper.GetTrackGUID(track)] = 0
+            chains[reaper.GetTrackGUID(track)] = fx_idx
         end
     end
     return chains
 end
 
 function save_track_fx_chain(fx_chain, path)
+    local file = io.open(path, "w")
+    for guid, fx_idx in pairs(fx_chain) do
+        file:write(guid .. "," .. fx_idx .. "\n")
+    end
+    file:close()
 end
 
-function close_fx_chain(fxs)
+function close_fx_chain(fx_chains)
+    for guid, fx_idx in pairs(fx_chains ) do
+        local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
+        reaper.TrackFX_Show(track, fx_idx, 0)
+    end
 end
 
-function load_track_fx_chain(fx_chain_path)
+function load_track_fx_chain(path)
+    local file = io.open(path, "r")
+    guids = get_track_guids()
+    for line in file:lines() do
+        local guid, fx_idx = line:match("([^,]*),([^,]*)")
+        if guids[guid] ~= nil then
+            local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
+            reaper.TrackFX_Show(track, fx_idx, 1)
+        end
+    end
+    file:close()
 end
 
 function main()
@@ -156,18 +174,17 @@ function main()
 
     if check_fx_open() or check_fx_chain_open() then
         local fx_chain = get_fx_chain_open()
-        local fxs = get_fx_open()
-
         save_track_fx_chain(fx_chain, fx_chain_path)
-        save_track_fx(fxs, fx_path)
-
         close_fx_chain(fx_chain)
+        
+        local fxs = get_fx_open()
+        save_track_fx(fxs, fx_path)
         close_fx(fxs)
     else
         if file_exists(fx_chain_path) then load_track_fx_chain(fx_chain_path) end
-        if file_exists(fx_path)       then load_track_fx(fx_path) end
-
         clear(fx_chain_path)
+        
+        if file_exists(fx_path)       then load_track_fx(fx_path) end
         clear(fx_path)
     end
 end
