@@ -51,7 +51,7 @@ end
 -- This needs to be refactored
 -- Also redesigned as `FXs` is not very efficient
 function get_fx_open()
-    local FXs = {}
+    local fxs = {}
     for iTrack = 0, reaper.GetNumTracks(current_project) - 1 do
         local track = reaper.GetTrack(current_project, iTrack)
         local fxCount = reaper.TrackFX_GetCount(track)
@@ -59,15 +59,15 @@ function get_fx_open()
         for iFx = 0, fxCount - 1 do
             if reaper.TrackFX_GetOpen(track, iFx) then
                 if first then
-                    FXs[reaper.GetTrackGUID(track)] = {}
+                    fxs[reaper.GetTrackGUID(track)] = {}
                     first = false
                 end
-                FXs[reaper.GetTrackGUID(track)][iFx] = iTrack
+                fxs[reaper.GetTrackGUID(track)][iFx] = iTrack
                 -- display("    " .. iTrack .. " -> " .. iFx .. "\n")
             end
         end
     end
-    return FXs
+    return fxs
 end
 
 function save_track_fx(fxs, path)
