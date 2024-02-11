@@ -131,8 +131,7 @@ function get_fx_chain_open()
     for iTrack = 0, reaper.GetNumTracks(current_project) - 1 do
         local track = reaper.GetTrack(current_project, iTrack)
         fx_idx = reaper.TrackFX_GetChainVisible(track)
-        local visible = fx_idx >= 0 or
-                        fx_idx == -2
+        local visible = fx_idx >= 0 or fx_idx == -2
         if visible then
             chains[reaper.GetTrackGUID(track)] = fx_idx
         end
@@ -149,7 +148,7 @@ function save_track_fx_chain(fx_chain, path)
 end
 
 function close_fx_chain(fx_chains)
-    for guid, fx_idx in pairs(fx_chains ) do
+    for guid, fx_idx in pairs(fx_chains) do
         local track = reaper.BR_GetMediaTrackByGUID(current_project, guid)
         reaper.TrackFX_Show(track, fx_idx, 0)
     end
@@ -176,15 +175,15 @@ function main()
         local fx_chain = get_fx_chain_open()
         save_track_fx_chain(fx_chain, fx_chain_path)
         close_fx_chain(fx_chain)
-        
+
         local fxs = get_fx_open()
         save_track_fx(fxs, fx_path)
         close_fx(fxs)
     else
         if file_exists(fx_chain_path) then load_track_fx_chain(fx_chain_path) end
         clear(fx_chain_path)
-        
-        if file_exists(fx_path)       then load_track_fx(fx_path) end
+
+        if file_exists(fx_path) then load_track_fx(fx_path) end
         clear(fx_path)
     end
 end
