@@ -55,6 +55,12 @@ function print_fxs(fxs)
     end
 end
 
+function print_fx_chains(fx_chains)
+    for guid, _ in pairs(fx_chains) do
+        display(guid)
+    end
+end
+
 -- This needs to be refactored
 -- Also redesigned as `FXs` is not very efficient
 function get_fx_open()
@@ -121,8 +127,18 @@ function check_fx_chain_open()
     return false
 end
 
+-- Assume single effect chain for now
 function get_fx_chain_open()
-    return {}
+    local chains = {}
+    for iTrack = 0, reaper.GetNumTracks(current_project) - 1 do
+        local track = reaper.GetTrack(current_project, iTrack)
+        local visible = reaper.TrackFX_GetChainVisible(track) >= 0 or
+                        reaper.TrackFX_GetChainVisible(track) == -2
+        if visible then
+            chains[reaper.GetTrackGUID(track)] = 0
+        end
+    end
+    return chains
 end
 
 function save_track_fx_chain(fx_chain, path)
