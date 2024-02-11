@@ -1,16 +1,22 @@
 -- When assigning this action as a shortcut, it's best to set the "Scope" to
 -- global. This way toggle visibility will work irrespective of focus.
 
+-- TODO:
+--  Handle case when FX chain is open
+--  Handle case when FX chain and track effects are both open (save FX chain first)
+--  Simplify table storing GUID -> FXs
+--  Verify GUID invalidations (don't reload effects from tracks that don't exist)
+
 local using_reaper = reaper ~= nil
 local current_project = reaper.EnumProjects(-1, "")
 
 local display = nil
 if using_reaper then
-    display = function (x)
+    display = function(x)
         reaper.ShowConsoleMsg(x .. "\n")
     end
-else 
-    display = function (x)
+else
+    display = function(x)
         print(x .. "\n")
     end
 end
